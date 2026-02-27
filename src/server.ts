@@ -69,10 +69,10 @@ function formatIdentifyResult(data: PlantNetIdentifyResponse): string {
 // --- Server factory ---
 
 export function createPlantNetServer(): Server {
-  const apiKey = process.env.PLANTNET_API_KEY;
+  const apiKey = process.env.PLANTNET_API_KEY ?? process.env.PLANTNET_API;
   if (!apiKey) {
     throw new Error(
-      'PLANTNET_API_KEY environment variable is required. ' +
+      'PLANTNET_API_KEY (or PLANTNET_API) environment variable is required. ' +
         'Get your free API key at https://my.plantnet.org/'
     );
   }
