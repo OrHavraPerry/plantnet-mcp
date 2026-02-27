@@ -1,49 +1,72 @@
-# PlantNet MCP Server
+# plantnet-mcp
 
-An MCP (Model Context Protocol) server that wraps the [Pl@ntNet plant identification API](https://my.plantnet.org/). Enables AI assistants to identify plant species from photos.
+> An MCP server for the [Pl@ntNet](https://plantnet.org) plant identification API — identify plants from photos directly within Claude.
 
-## Tools
+[![MCP](https://img.shields.io/badge/MCP-compatible-green)](https://modelcontextprotocol.io)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+---
+
+## Overview
+
+`plantnet-mcp` connects Claude to the [Pl@ntNet API](https://my.plantnet.org), enabling plant identification from images with scientific accuracy. Submit 1–5 photos of a plant and get back ranked species matches with confidence scores, taxonomic data, and regional flora support.
+
+### Tools Provided
 
 | Tool | Description |
 |------|-------------|
-| `identify_plant` | Identify plant species from 1–5 image URLs. Returns ranked matches with confidence, scientific/common names, taxonomy, and GBIF/POWO IDs. |
-| `list_projects` | List all available regional flora databases (projects). |
-| `check_quota` | Get information about daily API limits (500/day free tier). |
+| `identify_plant` | Identify a plant from 1–5 image URLs. Returns ranked species matches with confidence scores, scientific/common names, and taxonomic data (genus, family, GBIF/POWO IDs). |
+| `list_projects` | List available regional flora databases (e.g., world flora, Europe, Africa, Americas). Useful for targeting location-specific identification. |
+| `check_quota` | Check your daily API usage against your quota limit (500 identifications/day on the free tier). |
 
-## Setup
+---
 
-### 1. Get a free API key
+## Requirements
 
-Register at [https://my.plantnet.org/](https://my.plantnet.org/) and copy your API key.
+- [Node.js](https://nodejs.org) v18+
+- A free Pl@ntNet API key — register at [my.plantnet.org](https://my.plantnet.org)
 
-### 2. Install and build
+---
+
+## Installation
 
 ```bash
-git clone <this-repo>
-cd PlantNetMCP
+git clone https://github.com/OrHavraPerry/plantnet-mcp
+cd plantnet-mcp
 npm install
 npm run build
 ```
 
-### 3. Test
+---
+
+## Configuration
+
+### 1. Set your API key
+
+Copy `.env.example` to `.env` and add your key:
 
 ```bash
-npm test
+cp .env.example .env
 ```
 
-## Claude Desktop Configuration
+```env
+PLANTNET_API_KEY=your_api_key_here
+```
 
-Add to your Claude Desktop config file:
+### 2. Add to Claude Desktop
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+Edit your Claude Desktop config file:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "plantnet": {
       "command": "node",
-      "args": ["C:/AI/PlantNetMCP/dist/index.js"],
+      "args": ["/absolute/path/to/plantnet-mcp/dist/index.js"],
       "env": {
         "PLANTNET_API_KEY": "your_api_key_here"
       }
@@ -52,45 +75,74 @@ Add to your Claude Desktop config file:
 }
 ```
 
+Restart Claude Desktop after saving.
+
+---
+
 ## Usage Examples
 
 **Identify a plant from a photo URL:**
-> "What plant is in this image: https://example.com/photo.jpg"
-
-The assistant will call `identify_plant` with `organs: ["auto"]`.
-
-**Identify with multiple photos for better accuracy:**
-> "Identify this plant — I have a leaf photo and a flower photo."
-
-Pass both URLs with matching organs: `["leaf", "flower"]`.
-
-**Use a regional database:**
-> "What European plant is this?"
-
-1. Call `list_projects` to find the regional project ID (e.g., `"weurope"`)
-2. Call `identify_plant` with `project: "weurope"`
-
-## Project Structure
-
 ```
-src/
-  index.ts          # Entry point (stdio transport)
-  server.ts         # MCP server + tool handlers
-  plantnet-client.ts # Pl@ntNet HTTP client
-  types.ts          # TypeScript interfaces
-tests/
-  plantnet-client.test.ts  # 13 client tests (mocked HTTP)
-  server.test.ts           # 2 server tests
+Identify this plant: https://example.com/plant.jpg
 ```
 
-## Environment Variables
+**Multi-photo identification for better accuracy:**
+```
+Identify this plant using these photos — leaf: [url1], flower: [url2]
+```
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PLANTNET_API_KEY` | Yes | Your Pl@ntNet API key from my.plantnet.org |
+**Region-specific search:**
+```
+List available plant projects, then identify this plant [url] using the Europe flora
+```
 
-## API Limits
+**Check API usage:**
+```
+How many plant identifications do I have left today?
+```
 
-- Free tier: **500 identifications/day**
-- Max images per request: **5**
-- Supported formats: JPG, PNG
+---
+
+## Tool Reference
+
+### `identify_plant`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `images` | `string[]` | Yes | 1–5 image URLs (JPG or PNG) |
+| `organs` | `string[]` | No | Plant organ per image: `leaf`, `flower`, `fruit`, `bark`, `habit`, `auto`, `other` |
+| `project` | `string` | No | Flora database to search (default: `all`) |
+| `lang` | `string` | No | Language for common names (default: `en`) |
+| `nb_results` | `number` | No | Number of results to return, 1–25 (default: `5`) |
+
+### `list_projects`
+
+No parameters. Returns all available regional flora databases.
+
+### `check_quota`
+
+No parameters. Returns current daily usage and limit.
+
+---
+
+## Limits
+
+- **Free tier:** 500 identifications/day per API key
+- **Max images per request:** 5
+- **Supported formats:** JPG, PNG
+
+---
+
+## Development
+
+```bash
+npm run dev      # Run with ts-node (no build needed)
+npm run build    # Compile TypeScript to dist/
+npm test         # Run test suite
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE)
